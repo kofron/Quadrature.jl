@@ -5,13 +5,15 @@ using Base
 export adapt_simpson, adapt_lobatto
 
 # compute quadrature integral estimate via adaptive simpson rule.
-function adapt_simpson(f::Function, a::Float64, b::Float64, tol)
-
+function adapt_simpson{T <: Integer}(f::Function, a::T, b::T, tol)
+    adapt_simpson(f, float(a), float(b), tol)
+end
+function adapt_simpson{T <: FloatingPoint}(f::Function, a::T, b::T, tol)
     x = [a (a+b)/2 b]
     y = [f(p) for p in x]
     yy = [f(p) for p in (a + [0.9501 0.2311 0.6068 0.4860 0.8913]*(b-a))]
 
-    machine_eps = eps(x[2])
+    machine_eps = max(eps(a),eps(b))
     
     is = (b-a)/8*(sum(y)+sum(yy))
     is = (is == 0 ? b-a : is)*tol/machine_eps
@@ -36,8 +38,10 @@ function adapt_simpson1(f,a,b,fa,fm,fb,is)
 end
 
 # compute quadrature integral estimate via adaptive lobatto rule.
-function adapt_lobatto(f::Function, a::Float64, b::Float64, tol)
-
+function adapt_lobatto{T <: Integer}(f::Function, a::T, b::T, tol)
+    adapt_lobatto(f, float(a), float(b), tol)
+end
+function adapt_lobatto{T <: FloatingPoint}(f::Function, a::T, b::T, tol)
     m, h = (a+b)/2, (b-a)/2
     al, bt = sqrt(2/3), 1/sqrt(5)
 
@@ -47,7 +51,7 @@ function adapt_lobatto(f::Function, a::Float64, b::Float64, tol)
          m+bt*h,m+x2*h,m+al*h,m+x1*h,b]
     y = [f(p) for p in x]
 
-    machine_eps = eps(m)
+    machine_eps = max(eps(a),eps(b))
 
     i2 = (h/6)*(y[1] + y[end] + 5*(y[5]*y[9]))
     i1 = (h/1470)*(77*(y[1]+y[end])+432*(y[3] + y[11]) + 625*(y[5]+y[9])+672*y[7])
